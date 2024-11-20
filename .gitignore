@@ -1,0 +1,24 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+
+# Environment settings
+.env
+*.env
+
+# Virtual environments
+env/
+venv/
+.venv/
+git branch
+
+
+# Jupyter Notebook checkpoints (if using notebooks)
+.ipynb_checkpoints/
+
+# System-specific files
+.DS_Store
+Thumbs.db
+
+# VSCode-specific files
+.vscode/
