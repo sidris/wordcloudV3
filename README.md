@@ -12,6 +12,8 @@ If you generate the same word cloud, but do not remove stopwords, here is what t
 
 The following word cloud includes _all_ words in the text, including stopwords. Notice how words like "the" appear prominently because they occur frequently.
 
+_[Learn more about stopwords here](https://raw.githubusercontent.com/ashleysally00/analyze-east-of-eden/main/stopwords.md?raw=true)_
+
 ![Word Cloud With Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_with_stopwords.png?raw=true)
 
 #### Word Frequencies in Text
