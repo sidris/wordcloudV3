@@ -14,6 +14,12 @@ The following word cloud includes _all_ words in the text, including stopwords. 
 
 ![Word Cloud With Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_with_stopwords.png?raw=true)
 
+#### Word Frequencies in Text
+
+The word frequencies from the text (including stopwords) are displayed in this table, showing which words appear most often. For example, the word "the" appears 8 times. Below is a chart illustrating the top word frequencies:
+
+![Word Frequency Table Including Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word-frequency-table-including-stopwords.png?raw=true)
+
 If you want to include stopwords in your word cloud, you can. Here is the code to do that:
 
 python
@@ -31,12 +37,6 @@ plt.axis("off")
 plt.title("Word Cloud With Stopwords")
 plt.show()
 ```
-
-#### Word Frequencies in Text
-
-The word frequencies from the text have been displayed, showing which words appear most often. For example, the word "the" appears 8 times. Below is a chart illustrating the top word frequencies:
-
-![Word Frequency Table Including Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word-frequency-table-including-stopwords.png?raw=true)
 
 #### Word Cloud Without Stopwords
 
