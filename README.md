@@ -8,10 +8,11 @@ This is because the word cloud includes the NLTK library to remove stopwords. St
 
 #### Word Cloud With Stopwords
 
-![Word Cloud With Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_with_stopwords.png?raw=true)
-This word cloud includes all words in the text, including stopwords. Notice how words like "the" appear prominently because they occur frequently.
-
 If you generate the same word cloud, but do not remove stopwords, here is what the text looks like when analyzed as a word cloud.
+
+The following word cloud includes _all_ words in the text, including stopwords. Notice how words like "the" appear prominently because they occur frequently.
+
+![Word Cloud With Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_with_stopwords.png?raw=true)
 
 If you want to include stopwords in your word cloud, you can. Here is the code to do that:
 
