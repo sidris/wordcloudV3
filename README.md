@@ -68,5 +68,7 @@ pip install wordcloud matplotlib pandas nltk
 
 ## License
 
-This project is licensed under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/). See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/).  
+See the full license text in the [LICENSE file](https://github.com/ashleysally00/analyze-east-of-eden-word-cloud/blob/main/license.txt).
+
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
