@@ -2,6 +2,8 @@
 
 Word clouds do not have sentiment analysis included by default. If you generate a word cloud for the first paragraphs of East of Eden by John Steinbeck, some words that seem important appear bigger.
 
+![Word Cloud Without Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_without_stopwords.png?raw=true)
+
 This is because the word cloud includes the NLTK library to remove stopwords. Stopwords are words like “and” and “the,” which don’t have much meaning but occur frequently.
 
 #### Word Cloud With Stopwords
