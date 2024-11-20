@@ -46,9 +46,13 @@ This refined word cloud excludes stopwords, focusing on thematically meaningful 
 
 ## Why Words Like "Remember" and "Smell" Might Appear Bigger
 
-Frequency of Occurrence: Words like "remember" and "smell" may occur more often in the text of East of Eden.
-Stopword Filtering: Common stopwords (like "the," "and," "is," etc.) are often excluded automatically by libraries like WordCloud, ensuring that the focus remains on more meaningful or thematic words.
-Relevance to Themes: If the words "remember" and "smell" are central to the book’s themes or repeated in key passages, their size will reflect that.
+**Frequency of Occurrence**:
+
+- Even without sentiment analysis, some words may seem to stand out. Words like "remember" and "smell" may occur more often in the text of East of Eden.
+
+- Relevance to Themes: If the words "remember" and "smell" are central to the book’s themes or repeated in key passages, their size will reflect that.
+
+- Use of stopword Filtering: Common stopwords (e.g., "the," "and," "is") are usually filtered out by default in libraries like WordCloud. This ensures the focus is on more meaningful words, such as those central to the narrative.
 
 ### How to View or Recreate These Figures
 
