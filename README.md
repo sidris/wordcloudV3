@@ -1,6 +1,6 @@
 # Word Cloud Generator for East of Eden
 
-Word clouds do not have sentiment analysis included by default. If you generate a word cloud for the first paragraphs of East of Eden by John Steinbeck, some words that seem important appear bigger.
+Word clouds do not have sentiment analysis included by default. If you generate a word cloud for the first paragraphs of _East of Eden_ by John Steinbeck, some words that seem important appear bigger.
 
 ![Word Cloud Without Stopwords](https://github.com/ashleysally00/analyze-east-of-eden/blob/main/word_cloud_without_stopwords.png?raw=true)
 
@@ -46,11 +46,11 @@ plt.show()
 
 This refined word cloud excludes stopwords, focusing on thematically meaningful words like "remember," "smell," and "earth."
 
-## Why Words Like "Remember" and "Smell" Might Appear Bigger
+### Why Words Like "Remember" and "Smell" Might Appear Bigger
 
 **Frequency of Occurrence**:
 
-- Even without sentiment analysis, some words may seem to stand out. Words like "remember" and "smell" may occur more often in the text of East of Eden.
+- Even without sentiment analysis, some words may seem to stand out. Words like "remember" and "smell" may occur more often in the text of _East of Eden_.
 
 - Relevance to Themes: If the words "remember" and "smell" are central to the book’s themes or repeated in key passages, their size will reflect that.
 
@@ -63,5 +63,5 @@ To recreate these figures, run the app.py script in this repository. Ensure you 
 bash
 
 ```
-pip install wordcloud matplotlib pandas nltk'''
+pip install wordcloud matplotlib pandas nltk
 ```
