@@ -1,64 +1,118 @@
-# Import required libraries
-from wordcloud import WordCloud, STOPWORDS
-from collections import Counter
-import matplotlib.pyplot as plt
+from flask import Flask, request, render_template_string, redirect
 import pandas as pd
+from wordcloud import WordCloud, STOPWORDS
+import matplotlib.pyplot as plt
+import io
+import base64
+import re
 
-# Sample text (replace this with your actual text from East of Eden)
-east_of_eden = """
-I remember the smell of the earth and the feel of the wind. 
-Remembering is the key to learning, and the past shapes who we are. 
-Smell is the most evocative sense, bringing memories to life. 
-The earth is eternal, and we are transient. 
+app = Flask(__name__)
+
+# Başlangıç stopword seti (WordCloud default stopwords)
+stopwords_set = set(STOPWORDS)
+
+last_text = ""  # Yüklenecek ve kullanılacak metin
+
+HTML = """
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Excel'den Word Cloud</title>
+</head>
+<body>
+    <h2>Excel'den Word Cloud Oluştur</h2>
+
+    <form method="POST" enctype="multipart/form-data" action="/upload">
+        <label>Excel dosyasını seç (.xlsx):</label><br>
+        <input type="file" name="file" accept=".xlsx" required>
+        <button type="submit">Yükle ve Oluştur</button>
+    </form>
+
+    <br><hr><br>
+
+    <form method="POST" action="/stopwords">
+        <label>Stopword ekle veya sil (virgülle ayır):</label><br>
+        <input type="text" name="words" style="width:300px" placeholder="örnek: ve, ama, çünkü" required>
+        <button name="action" value="add" type="submit">Ekle</button>
+        <button name="action" value="remove" type="submit">Sil</button>
+    </form>
+
+    <p><b>Mevcut Stopword'ler:</b> {{ stopwords }}</p>
+
+    {% if wordcloud %}
+    <h3>Word Cloud</h3>
+    <img src="data:image/png;base64,{{ wordcloud }}" style="max-width: 800px; border: 1px solid #ccc;"/>
+    {% else %}
+    <p><i>Henüz bir metin yüklenmedi veya Word Cloud oluşturulmadı.</i></p>
+    {% endif %}
+</body>
+</html>
 """
 
-# Step 1: Generate the Word Cloud (with stopwords included)
-word_frequencies = Counter(east_of_eden.lower().split())
-cloud_east_of_eden = WordCloud(background_color="white").generate_from_frequencies(word_frequencies)
+def clean_text(text):
+    # Küçük harf, rakamları çıkar, noktalama kaldır
+    text = text.lower()
+    text = re.sub(r"\d+", "", text)
+    text = re.sub(r"[^\w\s]", "", text)
+    return text
 
-# Display the word cloud
-plt.figure(figsize=(10, 6))
-plt.imshow(cloud_east_of_eden, interpolation='bilinear')
-plt.axis('off')
-plt.title("Word Cloud with Stopwords")
-plt.show()
+def generate_wordcloud(text, stopwords):
+    if not text.strip():
+        return None
+    wc = WordCloud(width=800, height=400, background_color="white", stopwords=stopwords).generate(text)
+    img = io.BytesIO()
+    plt.figure(figsize=(10,5))
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.tight_layout(pad=0)
+    plt.savefig(img, format="png")
+    plt.close()
+    img.seek(0)
+    return base64.b64encode(img.getvalue()).decode()
 
-# Step 2: Display the table of word frequencies
-word_freq_df = pd.DataFrame(word_frequencies.items(), columns=["Word", "Frequency"]).sort_values(by="Frequency", ascending=False)
-print("\nWord Frequency Table (Including Stopwords):")
-print(word_freq_df)
+@app.route("/", methods=["GET"])
+def index():
+    wc_img = generate_wordcloud(last_text, stopwords_set) if last_text else None
+    return render_template_string(HTML, wordcloud=wc_img, stopwords=", ".join(sorted(stopwords_set)))
 
-# Step 3: Generate the Word Cloud (without stopwords)
-# Use WordCloud's built-in stopwords set
-stopwords = set(STOPWORDS)
-filtered_text = " ".join([word for word in east_of_eden.lower().split() if word not in stopwords])
+@app.route("/upload", methods=["POST"])
+def upload():
+    global last_text
+    if "file" not in request.files:
+        return redirect("/")
+    file = request.files["file"]
+    if not file or file.filename == "":
+        return redirect("/")
 
-cloud_filtered = WordCloud(background_color="white", stopwords=stopwords).generate(filtered_text)
+    try:
+        df = pd.read_excel(file)
+        # D sütununu al (4. sütun, indeks 3)
+        if df.shape[1] < 4:
+            last_text = ""
+        else:
+            texts = df.iloc[:, 3].dropna().astype(str).tolist()
+            combined = " ".join(texts)
+            last_text = clean_text(combined)
+    except Exception as e:
+        last_text = ""
+        print(f"Hata: {e}")
 
-# Display the filtered word cloud
-plt.figure(figsize=(10, 6))
-plt.imshow(cloud_filtered, interpolation='bilinear')
-plt.axis('off')
-plt.title("Word Cloud Without Stopwords")
-plt.show()
+    return redirect("/")
 
-# Save the word cloud with stopwords
-cloud_east_of_eden.to_file("word_cloud_with_stopwords.png")
+@app.route("/stopwords", methods=["POST"])
+def stopwords():
+    global stopwords_set
+    words_raw = request.form.get("words", "")
+    action = request.form.get("action", "")
 
-# Save the word cloud without stopwords
-cloud_filtered.to_file("word_cloud_without_stopwords.png")
+    words = [w.strip().lower() for w in re.split(r",|\n", words_raw) if w.strip()]
+    if action == "add":
+        stopwords_set.update(words)
+    elif action == "remove":
+        stopwords_set.difference_update(words)
 
-# Save the Matplotlib figures as images
-plt.figure(figsize=(10, 6))
-plt.imshow(cloud_east_of_eden, interpolation='bilinear')
-plt.axis('off')
-plt.title("Word Cloud with Stopwords")
-plt.savefig("figure_with_stopwords.png")  # Save the figure
-plt.show()
+    return redirect("/")
 
-plt.figure(figsize=(10, 6))
-plt.imshow(cloud_filtered, interpolation='bilinear')
-plt.axis('off')
-plt.title("Word Cloud Without Stopwords")
-plt.savefig("figure_without_stopwords.png")  # Save the figure
-plt.show()
+if __name__ == "__main__":
+    app.run(debug=True)
