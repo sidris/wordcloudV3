@@ -1,118 +1,131 @@
-from flask import Flask, request, render_template_string, redirect
+import streamlit as st
 import pandas as pd
-from wordcloud import WordCloud, STOPWORDS
 import matplotlib.pyplot as plt
-import io
-import base64
+from collections import Counter
+from wordcloud import WordCloud
 import re
+from io import BytesIO
 
-app = Flask(__name__)
+# --- DEFAULT STOPWORDS ---
+DEFAULT_STOPWORDS = {
+    "bir", "ve", "bu", "şu", "o", "da", "de", "mi", "ki", "ile", "gibi", "ya", "ne", "için",
+    "kadar", "ancak", "hatta", "hem", "ise", "yani", "ama", "veya", "diye", "sadece", "çok",
+    "az", "daha", "en", "yine", "hep", "üzerine", "sonra", "olan", "birçok", "birkaç",
+    "aslında", "elbette", "belki", "bile", "fakat", "çünkü", "çoğu", "bazı", "bazen",
+    "bazılarını", "bazısı", "bazıları", "about", "or", "have", "is", "no", "has", "on", "more", "to",
+    "at", "from", "this", "make", "which", "you", "not", "can", "of", "an", "it", "and", "all", "for",
+    "we", "will", "so", "that", "but", "like", "are", "if", "they", "in", "with", "what", "as",
+    *[str(i) for i in range(0, 10)],
+    *list("abcçdefgğhıijklmnoöprsştuüvyzqwxyz")
+}
 
-# Başlangıç stopword seti (WordCloud default stopwords)
-stopwords_set = set(STOPWORDS)
+st.set_page_config(layout="wide")
+st.title("🔠 Word Cloud ve Analiz Uygulaması")
 
-last_text = ""  # Yüklenecek ve kullanılacak metin
+# Sidebar
+st.sidebar.header("📁 Dosya Yükle ve Analiz Seçenekleri")
+uploaded_file = st.sidebar.file_uploader("Excel dosyası yükleyin (.xlsx)", type=["xlsx"])
 
-HTML = """
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8" />
-    <title>Excel'den Word Cloud</title>
-</head>
-<body>
-    <h2>Excel'den Word Cloud Oluştur</h2>
+# ANALİZ SEÇİMLERİ (HEATMAP KALDIRILDI)
+st.sidebar.subheader("📊 Analizler")
+analizler = {
+    "Bar Chart (Kelime Frekansı)": False,
+    "Bubble Chart": False
+}
+if "selected_analyses" not in st.session_state:
+    st.session_state.selected_analyses = analizler.copy()
 
-    <form method="POST" enctype="multipart/form-data" action="/upload">
-        <label>Excel dosyasını seç (.xlsx):</label><br>
-        <input type="file" name="file" accept=".xlsx" required>
-        <button type="submit">Yükle ve Oluştur</button>
-    </form>
+for key in analizler.keys():
+    st.session_state.selected_analyses[key] = st.sidebar.checkbox(
+        key, value=st.session_state.selected_analyses.get(key, False)
+    )
 
-    <br><hr><br>
+# STOPWORD YÖNETİMİ
+st.sidebar.subheader("🚫 Stopword Yönetimi")
+if "stopwords" not in st.session_state:
+    st.session_state.stopwords = DEFAULT_STOPWORDS.copy()
 
-    <form method="POST" action="/stopwords">
-        <label>Stopword ekle veya sil (virgülle ayır):</label><br>
-        <input type="text" name="words" style="width:300px" placeholder="örnek: ve, ama, çünkü" required>
-        <button name="action" value="add" type="submit">Ekle</button>
-        <button name="action" value="remove" type="submit">Sil</button>
-    </form>
+new_stop = st.sidebar.text_input("Yeni stopword ekle")
+if st.sidebar.button("Ekle") and new_stop:
+    st.session_state.stopwords.add(new_stop.lower())
+    st.sidebar.info("Stopword eklendi. Lütfen sayfayı yenileyin.")
 
-    <p><b>Mevcut Stopword'ler:</b> {{ stopwords }}</p>
+st.sidebar.markdown("### Mevcut Stopwordler")
+for word in sorted(st.session_state.stopwords):
+    col1, col2 = st.sidebar.columns([8, 1])
+    col1.markdown(f"`{word}`")
+    if col2.button("❌", key=f"del_{word}"):
+        st.session_state.stopwords.remove(word)
+        st.sidebar.info("Stopword çıkarıldı. Lütfen sayfayı yenileyin.")
 
-    {% if wordcloud %}
-    <h3>Word Cloud</h3>
-    <img src="data:image/png;base64,{{ wordcloud }}" style="max-width: 800px; border: 1px solid #ccc;"/>
-    {% else %}
-    <p><i>Henüz bir metin yüklenmedi veya Word Cloud oluşturulmadı.</i></p>
-    {% endif %}
-</body>
-</html>
-"""
+# Analiz Fonksiyonu
+def draw_analyses(texts, stopwords, selected_analyses):
+    all_text = " ".join(texts).lower()
+    words = re.findall(r"[\wçğıiöşü]+", all_text)
+    filtered_words = [w for w in words if w not in stopwords]
+    word_freq = Counter(filtered_words)
 
-def clean_text(text):
-    # Küçük harf, rakamları çıkar, noktalama kaldır
-    text = text.lower()
-    text = re.sub(r"\d+", "", text)
-    text = re.sub(r"[^\w\s]", "", text)
-    return text
+    st.header("📈 Word Cloud ve Analizler")
 
-def generate_wordcloud(text, stopwords):
-    if not text.strip():
-        return None
-    wc = WordCloud(width=800, height=400, background_color="white", stopwords=stopwords).generate(text)
-    img = io.BytesIO()
-    plt.figure(figsize=(10,5))
-    plt.imshow(wc, interpolation="bilinear")
-    plt.axis("off")
-    plt.tight_layout(pad=0)
-    plt.savefig(img, format="png")
-    plt.close()
-    img.seek(0)
-    return base64.b64encode(img.getvalue()).decode()
+    wc = WordCloud(width=800, height=600, background_color="white").generate_from_frequencies(word_freq)
+    fig_wc, ax_wc = plt.subplots(figsize=(10, 7))
+    ax_wc.imshow(wc, interpolation="bilinear")
+    ax_wc.axis("off")
+    st.pyplot(fig_wc)
 
-@app.route("/", methods=["GET"])
-def index():
-    wc_img = generate_wordcloud(last_text, stopwords_set) if last_text else None
-    return render_template_string(HTML, wordcloud=wc_img, stopwords=", ".join(sorted(stopwords_set)))
+    img_buffer = BytesIO()
+    fig_wc.savefig(img_buffer, format="png")
+    img_buffer.seek(0)
+    st.download_button("💾 WordCloud PNG indir", data=img_buffer, file_name="wordcloud.png", mime="image/png")
 
-@app.route("/upload", methods=["POST"])
-def upload():
-    global last_text
-    if "file" not in request.files:
-        return redirect("/")
-    file = request.files["file"]
-    if not file or file.filename == "":
-        return redirect("/")
+    st.markdown("### Kelime Frekans Tablosu")
+    freq_df = pd.DataFrame(word_freq.most_common(), columns=["Kelime", "Frekans"])
+    st.dataframe(freq_df, height=300)
 
-    try:
-        df = pd.read_excel(file)
-        # D sütununu al (4. sütun, indeks 3)
-        if df.shape[1] < 4:
-            last_text = ""
-        else:
-            texts = df.iloc[:, 3].dropna().astype(str).tolist()
-            combined = " ".join(texts)
-            last_text = clean_text(combined)
-    except Exception as e:
-        last_text = ""
-        print(f"Hata: {e}")
+    if selected_analyses.get("Bar Chart (Kelime Frekansı)"):
+        st.subheader("📊 Kelime Frekans Bar Grafiği")
+        fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
+        top_words = word_freq.most_common(20)
+        words_bar = [w[0] for w in top_words]
+        counts_bar = [w[1] for w in top_words]
+        ax_bar.bar(words_bar, counts_bar, color='skyblue')
+        ax_bar.set_xticklabels(words_bar, rotation=45, ha='right')
+        ax_bar.set_ylabel("Frekans")
+        st.pyplot(fig_bar)
+        st.markdown("""**Grafik Açıklaması:** En sık geçen 20 kelimenin frekanslarını gösterir.  
+**Yorum:** Metindeki baskın kavramları ve tekrar eden temaları kolayca belirlemenizi sağlar.""")
 
-    return redirect("/")
+    if selected_analyses.get("Bubble Chart"):
+        st.subheader("🫧 Bubble Chart (Kelime Dağılımı)")
+        top_words = word_freq.most_common(20)
+        bubble_df = pd.DataFrame(top_words, columns=["Kelime", "Frekans"])
+        fig_bubble, ax_bubble = plt.subplots(figsize=(10, 6))
+        sizes = bubble_df["Frekans"] * 30
+        ax_bubble.scatter(x=range(len(bubble_df)), y=[1] * len(bubble_df),
+                          s=sizes, alpha=0.6, color="skyblue")
 
-@app.route("/stopwords", methods=["POST"])
-def stopwords():
-    global stopwords_set
-    words_raw = request.form.get("words", "")
-    action = request.form.get("action", "")
+        for i, row in bubble_df.iterrows():
+            ax_bubble.text(i, 1, row["Kelime"], ha='center', va='center', fontsize=10)
 
-    words = [w.strip().lower() for w in re.split(r",|\n", words_raw) if w.strip()]
-    if action == "add":
-        stopwords_set.update(words)
-    elif action == "remove":
-        stopwords_set.difference_update(words)
+        ax_bubble.axis('off')
+        st.pyplot(fig_bubble)
+        st.markdown("""**Grafik Açıklaması:** Frekans büyüklüğüne göre kabarcıklarla gösterim sağlar.  
+**Yorum:** Kelimelerin etkilerini sezgisel olarak fark etmeyi kolaylaştırır.""")
 
-    return redirect("/")
+# Dosya yüklendiyse
+if uploaded_file:
+    df = pd.read_excel(uploaded_file)
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    default_col = "D" if "D" in df.columns else df.columns[0]
+    selected_column = st.selectbox(
+        "📋 Analiz için sütun seçin",
+        options=df.columns,
+        index=df.columns.get_loc(default_col)
+    )
+
+    texts = df[selected_column].astype(str).tolist()
+
+    if texts:
+        draw_analyses(texts, st.session_state.stopwords, st.session_state.selected_analyses)
+else:
+    st.info("Lütfen sol panelden bir Excel dosyası yükleyin ve analizleri seçin.")

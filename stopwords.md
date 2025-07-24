@@ -45,7 +45,7 @@ nltk.download('stopwords')
 
 ```
 
-stop_words = set(stopwords.words('english'))
+stop_words = set(stopwords.words('turkish'))
 print(stop_words)
 
 ```
