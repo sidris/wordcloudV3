@@ -12,3 +12,4 @@ sentence-transformers
 hdbscan
 networkx
 streamlit
+openpyxl
